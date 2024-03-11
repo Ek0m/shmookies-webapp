@@ -1,0 +1,196 @@
+const { gql, default: request } = require("graphql-request");
+
+const MASTER_URL =
+  "https://api-us-east-1-shared-usea1-02.hygraph.com/v2/" +
+  process.env.NEXT_PUBLIC_MASTER_URL_KEY +
+  "/master";
+
+const getCategory = async () => {
+  const query = gql`
+    query Category {
+      categories {
+        id
+        name
+        image {
+          url
+        }
+        color {
+          hex
+        }
+      }
+    }
+  `;
+  const result = await request(MASTER_URL, query);
+  return result;
+};
+
+const getAllBusinessList = async () => {
+  const query = gql`
+    query BusinessList {
+      businessLists {
+        about
+        address
+        category {
+          name
+        }
+        contactPerson
+        email
+        images {
+          url
+        }
+        name
+        id
+      }
+    }
+  `;
+  const result = await request(MASTER_URL, query);
+  return result;
+};
+
+const getFilteredBusinessByCategory = async (category) => {
+  const query =
+    gql`
+    query FilterRestaurantByCategory {
+      businessLists(where: { category: { name: "` +
+    category +
+    `" } }) {
+        about
+        address
+        category {
+          name
+        }
+        contactPerson
+        email
+        id
+        name
+        images {
+          url
+        }
+      }
+    }
+  `;
+  const result = await request(MASTER_URL, query);
+  return result;
+};
+
+const getBusinessById = async (id) => {
+  const query =
+    gql`
+    query getBusinessById {
+      businessList(where: { id: "` +
+    id +
+    `" }) {
+        about
+        address
+        category {
+          name
+        }
+        contactPerson
+        email
+        id
+        name
+        images {
+          url
+        }
+      }
+    }
+  `;
+  const result = await request(MASTER_URL, query);
+  return result;
+};
+
+const createNewBooking = async (
+  businessId,
+  date,
+  time,
+  userEmail,
+  userName
+) => {
+  const mutationQuery =
+    gql`
+    mutation CreateBookings {
+      createBooking(
+        data: {
+          progressStaus: Booked
+          businessList: { connect: { id: "` +
+    businessId +
+    `" } }
+          date: "` +
+    date +
+    `"
+          time: "` +
+    time +
+    `"
+          userEmail: "` +
+    userEmail +
+    `"
+          userName: "` +
+    userName +
+    `"
+        }
+      ) {
+        id
+      }
+      publishManyBookings(to: PUBLISHED) {
+      count
+    }
+    }
+  `;
+  const result = await request(MASTER_URL, mutationQuery);
+  return result;
+};
+
+const BusinessBookedSlot = async (businessId, date) => {
+  const query =
+    gql`
+  query businessBookedSlot {
+    bookings(where: {businessList: 
+      {id: "` +
+    businessId +
+    `"}, date: "` +
+    date +
+    `"}) {
+      date
+      time
+    }
+  }
+  `;
+  const result = await request(MASTER_URL, query);
+  return result;
+};
+
+const GetUserBookingHistory = async (userEmail) => {
+  const query =
+    gql`
+  query GetUserBookingHistory {
+    bookings(where: {userEmail: "` +
+    userEmail +
+    `"}
+    orderBy: publishedAt_DESC) {
+      businessList {
+        name
+        images {
+          url
+        }
+        contactPerson
+        address
+      }
+      date
+      time
+      id
+    }
+  }
+  `;
+  const result = await request(MASTER_URL, query);
+  return result;
+};
+
+export default {
+  getCategory,
+  getAllBusinessList,
+  getFilteredBusinessByCategory,
+  getBusinessById,
+  createNewBooking,
+  BusinessBookedSlot,
+  GetUserBookingHistory,
+};
